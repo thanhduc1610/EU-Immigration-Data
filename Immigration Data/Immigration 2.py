@@ -42,38 +42,35 @@ from pathlib import Path
 
 
 
-df = pd.read_csv("Asylum applicants grouped.csv")
-print(df.head())
-# # Columns that are years
-# year_cols = [col for col in df.columns if str(col).strip().isdigit()]
-#
-# # Everything except applicant and years identifies the row
-# id_cols = [col for col in df.columns if col not in year_cols and col != "citizen"]
-#
-# # Pivot applicant statuses into columns
-# df_grouped = df.pivot(index=id_cols, columns="citizen", values=year_cols)
-#
-# # Flatten the multi-level column names
-# df_grouped.columns = [
-#     f"{status}_{year}"
-#     for year, status in df_grouped.columns
-# ]
-#
-# #print
-# print(df_grouped.head())
-#
-# # Turn index columns back into normal columns
-# df_grouped = df_grouped.reset_index()
-# df_grouped = df_grouped[df_grouped["geo"] != "EU27_2020"]
-#
-# # Create a new csv file
-# df_grouped.to_csv("At-risk-of poverty rate for children grouped.csv", index=False)
+df = pd.read_csv("At-risk-of poverty rate for children by citizenship of their parents_cleaned.csv")
+# Columns that are years
+year_cols = [col for col in df.columns if str(col).strip().isdigit()]
+
+# Everything except applicant and years identifies the row
+id_cols = [col for col in df.columns if col not in year_cols and col != "citizen"]
+
+# Pivot applicant statuses into columns
+df_grouped = df.pivot(index=id_cols, columns="citizen", values=year_cols)
+
+# Flatten the multi-level column names
+df_grouped.columns = [
+    f"{status}_{year}"
+    for year, status in df_grouped.columns
+]
+
+#print
+print(df_grouped.head())
+
+# Turn index columns back into normal columns
+df_grouped = df_grouped.reset_index()
+df_grouped = df_grouped[~df_grouped["geo"].str.contains(r"\d", na=False)]
+
+# Create a new csv file
+df_grouped.to_csv("At-risk-of poverty rate for children grouped.csv", index=False)
 
 # #PLOTTING
-# import pandas as pd
-# import matplotlib.pyplot as plt
-# import seaborn as sns
-#
+
+
 # # Read CSV
 # df = pd.read_csv(
 #     "Asylum applicants by type - annual aggregated data_cleaned.csv"
