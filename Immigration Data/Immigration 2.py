@@ -46,6 +46,10 @@ df = pd.read_csv("At-risk-of poverty rate for children by citizenship of their p
 # Columns that are years
 year_cols = [col for col in df.columns if str(col).strip().isdigit()]
 
+# Keep only the numerical part of Eurostat values
+for col in year_cols:
+    df[col] = pd.to_numeric(df[col].astype(str).str.extract(r"(-?\d+(?:\.\d+)?)", expand=False), errors="coerce")
+
 # Everything except applicant and years identifies the row
 id_cols = [col for col in df.columns if col not in year_cols and col != "citizen"]
 
@@ -68,47 +72,66 @@ df_grouped = df_grouped[~df_grouped["geo"].str.contains(r"\d", na=False)]
 # Create a new csv file
 df_grouped.to_csv("At-risk-of poverty rate for children grouped.csv", index=False)
 
-# #PLOTTING
+##PLOTTING
+# Read CSV
+df = df_grouped
 
+# Remove spaces from column names
+df.columns = df.columns.str.strip()
 
-# # Read CSV
-# df = pd.read_csv(
-#     "Asylum applicants by type - annual aggregated data_cleaned.csv"
-# )
-#
-# # Keep only TOTAL applicants
-# df_total = df[df["applicant"] == "TOTAL"].copy()
-#
-# # Identify the year columns
-# year_cols = [col for col in df.columns if str(col).strip().isdigit()]
-#
-# # Convert from wide to long format
-# plot_df = df_total.melt(
-#     id_vars=["geo"],
-#     value_vars=year_cols,
-#     var_name="year",
-#     value_name="applicants"
-# )
-#
-# # Convert to numeric
-# plot_df["year"] = pd.to_numeric(plot_df["year"])
-# plot_df["applicants"] = pd.to_numeric(
-#     plot_df["applicants"],
-#     errors="coerce"
-# )
-#
-# # Plot
-# plt.figure(figsize=(14, 8))
-#
-# sns.lineplot(
-#     data=plot_df,
-#     x="year",
-#     y="applicants",
-#     hue="geo"
-# )
-#
-# plt.title("Total Asylum Applicants by Country")
-# plt.xlabel("Year")
-# plt.ylabel("Number of Applicants")
-#
-# plt.show()
+# Select Netherlands and Spain
+countries = df[df["geo"].isin(["NL", "ES"])]
+
+years = range(2003, 2026)
+
+plt.figure(figsize=(12, 6))
+
+# Assign a color to each country
+country_colors = {
+    "NL": "orange",
+    "ES": "blue"
+}
+
+for country in ["NL", "ES"]:
+
+    country_df = countries[countries["geo"] == country]
+
+    nat = []
+    foreign = []
+
+    for year in years:
+        nat.append(
+            country_df[f"NAT_{year}"].iloc[0]
+        )
+
+        foreign.append(
+            country_df[f"FOR_{year}"].iloc[0]
+        )
+
+    # National = solid line
+    plt.plot(
+        years,
+        nat,
+        color=country_colors[country],
+        linestyle="-",
+        linewidth=2,
+        label=f"{country} - National"
+    )
+
+    # Foreign = dashed line
+    plt.plot(
+        years,
+        foreign,
+        color=country_colors[country],
+        linestyle="--",
+        linewidth=2,
+        label=f"{country} - Foreign"
+    )
+
+plt.xlabel("Year")
+plt.ylabel("At-risk-of-poverty rate (%)")
+plt.title("At-risk-of-poverty rate for children – Netherlands & Spain")
+plt.legend()
+plt.grid(alpha=0.3)
+
+plt.show()
